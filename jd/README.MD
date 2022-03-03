@@ -33,7 +33,7 @@ pip install -r requirements.txt
 若为Linux系统，可后台挂起
 
 ```shell
-nohup python3 jx_cfd_hb.py &
+nohup python3 jx_cfd_hb.py >/dev/null 2>&1 &
 ```
 
 若为windows，直接运行脚本，然后小化窗口即可

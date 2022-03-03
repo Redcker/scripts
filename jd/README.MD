@@ -11,7 +11,7 @@ git clone https://github.com/Redcker/scripts.git
 ### 进入jd文件夹
 
 ```shell
-cd jd
+cd scripts/jd
 ```
 
 ### 安装依赖

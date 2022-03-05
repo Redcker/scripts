@@ -28,6 +28,10 @@ pip install -r requirements.txt
 
 ***advance_time是请求提前多久发送，会自动优化，尽量不要手动修改***
 
+cookie的格式为pt_key=''
+
+填完配置后，检查是否符合json格式
+
 ### 运行脚本
 
 若为Linux系统，可后台挂起
@@ -41,6 +45,24 @@ nohup python3 jx_cfd_hb.py >/dev/null 2>&1 &
 ### 查看日志
 
 日志文件在脚本同目录下的cfd.log中
+
+### 停止脚本
+
+先查看进程号
+
+```shell
+ps -aux | grep 'python3 jx_cfd_hb.py'
+```
+
+第一行，第二列有一串数字，就是进程号 
+
+用进程号替换掉下方的PID即可停止脚本
+
+```shell
+kill -9 PID
+```
+
+
 
 
 

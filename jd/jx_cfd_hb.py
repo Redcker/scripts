@@ -1,3 +1,7 @@
+"""
+cron: 50 59 * * * *
+new Env('财富岛兑换红包 - By Redcker');
+"""
 import datetime
 from ql_api import get_envs, post_envs, delete_envs
 

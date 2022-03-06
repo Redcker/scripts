@@ -1,29 +1,12 @@
-import logging
 import datetime
-import json
+from ql_qpi import get_envs, post_envs, delete_envs
 
 try:
-    from apscheduler.schedulers.blocking import BlockingScheduler
-    from fake_useragent import UserAgent
-    from tzlocal import get_localzone_name
     import requests
     import pytz
 except Exception as e:
-    logging.error(f'依赖导入错误：{e}')
+    print(f'依赖导入错误：{e}')
     exit(1)
-
-
-def send_to_wechat(title):
-    """
-    微信推送
-    """
-    data = {
-        'title': f'财富岛红包状态：{title}',
-        'content': '请按照状态提示进行对应操作',
-        'token': token,
-    }
-    url = 'http://www.pushplus.plus/send'
-    requests.post(url, data=data)
 
 
 def get_next_time():
@@ -48,8 +31,8 @@ class JxCFD(object):
             "Accept": "*/*",
             "Connection": "keep-alive",
             'referer': 'https://st.jingxi.com/fortune_island/index2.html?ptag=7155.9.47&sceneval=2&sid=6f488e2778fa2db09a39f105577da07w',
-            'user-agent': f'jdpingou;android;5.21.4;appBuild/20596;session/332;pap/JA2019_3111789;ef/1;{UserAgent(use_cache_server=False).random}',
-            'cookie': self.cookie,
+            'user-agent': 'jdpingou;android;5.21.4;appBuild/20596;session/332;pap/JA2019_3111789;ef/1;',
+            'cookie': self.cookie['value'],
             "Accept-Language": "zh-CN,zh-Hans;q=0.9",
             "Accept-Encoding": "gzip, deflate, br"
         }
@@ -62,9 +45,9 @@ class JxCFD(object):
         ret = self.session.get(url).json()
         try:
             pool = ret['hongbaopool']
-        except KeyError:
-            logging.error('获取最新url失败，可能是cookie已过期')
-            send_to_wechat('cookie已失效')
+        except (KeyError, IndexError):
+            print('获取最新url失败，可能是cookie过期或黑号')
+            print('获取最新url失败，可能是cookie过期或黑号')
             return
         else:
             dwLvl = ret['hongbao'][0]['dwLvl']
@@ -79,56 +62,42 @@ class JxCFD(object):
         if not cfd_url:
             return
         while datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp() < (
-                next_timestamp - advance_time):  # 未到时间，无限循环
+                next_timestamp - float(advance_time['value'])):  # 未到时间，无限循环
             pass
         try:
             start_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp()
             ret = self.session.get(cfd_url).json()
             spend_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp() - start_time  # 请求花费时间
         except requests.exceptions.JSONDecodeError:
-            logging.error('cookie认证失败，请不要担心，这个是偶发情况。此次请求停止，等待下次请求')
+            print('cookie认证失败，请不要担心，这个是偶发情况。此次请求停止，等待下次请求')
             return
         if ret['iRet'] == 0:
             title = '抢到了'
         else:
             title = ret['sErrMsg']
-        logging.info(f"抢购结果：{title}")
+        print(f"抢购结果：{title}")
         ret_code = ret['iRet']
+        delete_envs([advance_time['id']])
+        post_envs('CFD_ADVANCE_TIME', str(spend_time), '财富岛提前多久执行，请勿手动修改')
         if ret_code in [2013, 2016]:  # 抢早或者抢迟不推送至微信
-            CONFIG['advance_time'] = spend_time
-            with open('cfd_config.json', 'w', encoding='utf-8') as fp:  # 更新配置
-                json.dump(CONFIG, fp, indent=2)
-        else:
-            send_to_wechat(title=title)
+            delete_envs([advance_time['id']])
+            post_envs('CFD_ADVANCE_TIME', str(spend_time), '财富岛提前多久执行，请勿手动修改')
 
 
 if __name__ == '__main__':
-    logger = logging.getLogger()  # 日志配置
-    fh = logging.FileHandler('cfd.log', encoding='utf-8')
-    formatter = logging.Formatter("%(asctime)s - %(message)s")
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.setLevel(logging.INFO)
-    logging.getLogger('apscheduler').setLevel(logging.ERROR)  # 不输出apscheduler的非错误日志
-    with open('cfd_config.json', 'r', encoding='utf-8') as f:
-        try:
-            CONFIG = json.load(f)  # 读取配置
-        except json.decoder.JSONDecodeError:
-            logging.error('配置读取错误，请检查配置文件格式是否正确')
-            exit(1)
-    token = CONFIG['pushplus_token']  # 读取pushplus token
-    cookie = CONFIG['cookie']  # 读取token
-    advance_time = CONFIG['advance_time']  # 提前时间
-    if get_localzone_name() != 'Asia/Shanghai':
-        logging.error('系统时区不是中国时区，脚本将使用中国时区运行，为了更准确的进行抢购，请最好主动调整系统时区')
+    advance_time = get_envs('CFD_ADVANCE_TIME')
+    if len(advance_time) > 0:
+        advance_time = advance_time[0]
+    else:
+        advance_time = 0.20
+        ret = post_envs('CFD_ADVANCE_TIME', str(advance_time), '财富岛提前多久执行，请勿手动修改')
+        advance_time = ret
+    cookie = get_envs('CFD_HB_COOKIE')
+    if len(cookie) > 0:
+        cookie = cookie[0]
+    else:
+        print('请先添加环境变量CFD_HB_COOKIE,内容为待抢账号的cookie')
+        exit(0)
     next_timestamp = get_next_time()
     jx_cfd = JxCFD(cookie)
-    scheduler = BlockingScheduler()
-    try:
-        scheduler.add_job(func=jx_cfd.exchange_red_package, trigger='cron', minute=59, id='jx_cfd',
-                          timezone='Asia/Shanghai')
-    except Exception as e:
-        logging.error(f'启动定时任务失败，具体错误为：{e}')
-    else:
-        logging.info('定时脚本启动成功')
-        scheduler.start()
+    jx_cfd.exchange_red_package()

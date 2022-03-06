@@ -17,7 +17,7 @@ cd scripts/jd
 ### 安装依赖
 
 ```shell
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### 填写配置

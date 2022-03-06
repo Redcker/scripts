@@ -48,7 +48,7 @@ class JxCFD(object):
             "Accept": "*/*",
             "Connection": "keep-alive",
             'referer': 'https://st.jingxi.com/fortune_island/index2.html?ptag=7155.9.47&sceneval=2&sid=6f488e2778fa2db09a39f105577da07w',
-            'user-agent': f'jdpingou;android;5.21.4;appBuild/20596;session/332;pap/JA2019_3111789;ef/1;{UserAgent().random}',
+            'user-agent': f'jdpingou;android;5.21.4;appBuild/20596;session/332;pap/JA2019_3111789;ef/1;{UserAgent(use_cache_server=False).random}',
             'cookie': self.cookie,
             "Accept-Language": "zh-CN,zh-Hans;q=0.9",
             "Accept-Encoding": "gzip, deflate, br"
@@ -61,13 +61,13 @@ class JxCFD(object):
         url = 'https://m.jingxi.com/jxbfd/user/ExchangeState?strZone=jxbfd&dwType=2&sceneval=2&g_login_type=1'
         ret = self.session.get(url).json()
         try:
-            dwLvl = ret['hongbao'][0]['dwLvl']
             pool = ret['hongbaopool']
         except KeyError:
             logging.error('获取最新url失败，可能是cookie已过期')
             send_to_wechat('cookie已失效')
             return
         else:
+            dwLvl = ret['hongbao'][0]['dwLvl']
             new_url = f'https://m.jingxi.com/jxbfd/user/ExchangePrize?strZone=jxbfd&dwType=3&dwLvl={dwLvl}&ddwPaperMoney=100000&strPoolName={pool}&sceneval=2&g_login_type=1'
         return new_url
 
@@ -119,10 +119,9 @@ if __name__ == '__main__':
     token = CONFIG['pushplus_token']  # 读取pushplus token
     cookie = CONFIG['cookie']  # 读取token
     advance_time = CONFIG['advance_time']  # 提前时间
-    offset_time = 0.01
     if get_localzone_name() != 'Asia/Shanghai':
         logging.error('系统时区不是中国时区，脚本将使用中国时区运行，为了更准确的进行抢购，请最好主动调整系统时区')
-    next_timestamp = get_next_time()
+    next_timestamp = datetime.datetime.now().timestamp()
     jx_cfd = JxCFD(cookie)
     scheduler = BlockingScheduler()
     try:

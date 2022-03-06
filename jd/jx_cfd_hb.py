@@ -1,5 +1,5 @@
 import datetime
-from ql_qpi import get_envs, post_envs, delete_envs
+from ql_api import get_envs, post_envs, delete_envs
 
 try:
     import requests

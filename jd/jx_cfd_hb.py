@@ -121,7 +121,7 @@ if __name__ == '__main__':
     advance_time = CONFIG['advance_time']  # 提前时间
     if get_localzone_name() != 'Asia/Shanghai':
         logging.error('系统时区不是中国时区，脚本将使用中国时区运行，为了更准确的进行抢购，请最好主动调整系统时区')
-    next_timestamp = datetime.datetime.now().timestamp()
+    next_timestamp = get_next_time()
     jx_cfd = JxCFD(cookie)
     scheduler = BlockingScheduler()
     try:

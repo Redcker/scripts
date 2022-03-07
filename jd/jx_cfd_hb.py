@@ -4,8 +4,6 @@ import json
 
 try:
     from apscheduler.schedulers.blocking import BlockingScheduler
-    from fake_useragent import UserAgent
-    from tzlocal import get_localzone_name
     import requests
     import pytz
 except Exception as e:
@@ -48,7 +46,7 @@ class JxCFD(object):
             "Accept": "*/*",
             "Connection": "keep-alive",
             'referer': 'https://st.jingxi.com/fortune_island/index2.html?ptag=7155.9.47&sceneval=2&sid=6f488e2778fa2db09a39f105577da07w',
-            'user-agent': f'jdpingou;android;5.21.4;appBuild/20596;session/332;pap/JA2019_3111789;ef/1;{UserAgent(use_cache_server=False).random}',
+            'user-agent': f'jdpingou;android;5.21.4;appBuild/20596;session/332;pap/JA2019_3111789;ef/1;',
             'cookie': self.cookie,
             "Accept-Language": "zh-CN,zh-Hans;q=0.9",
             "Accept-Encoding": "gzip, deflate, br"
@@ -121,8 +119,6 @@ if __name__ == '__main__':
     token = CONFIG['pushplus_token']  # 读取pushplus token
     cookie = CONFIG['cookie']  # 读取token
     advance_time = CONFIG['advance_time']  # 提前时间
-    if get_localzone_name() != 'Asia/Shanghai':
-        logging.error('系统时区不是中国时区，脚本将使用中国时区运行，为了更准确的进行抢购，请最好主动调整系统时区')
     next_timestamp = get_next_time()
     jx_cfd = JxCFD(cookie)
     scheduler = BlockingScheduler()

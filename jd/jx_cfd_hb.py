@@ -78,13 +78,15 @@ class JxCFD(object):
         cfd_url = self.get_cfd_url()
         if not cfd_url:
             return
-        while datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp() < (
-                next_timestamp - advance_time):  # 未到时间，无限循环
+        time_delta = next_timestamp - advance_time
+        while datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp() < time_delta:  # 未到时间，无限循环
             pass
         try:
-            start_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp()
+            start_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai'))
+            logging.info(f'开始请求，当前时间为：{start_time.strftime("%Y-%m-%d %H:%M:%S:%f")}')
             ret = self.session.get(cfd_url).json()
-            spend_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp() - start_time  # 请求花费时间
+            spend_time = datetime.datetime.now(
+                tz=pytz.timezone('Asia/Shanghai')).timestamp() - start_time.timestamp()  # 请求花费时间
         except requests.exceptions.JSONDecodeError:
             logging.error('cookie认证失败，请不要担心，这个是偶发情况。此次请求停止，等待下次请求')
             return
@@ -125,7 +127,7 @@ if __name__ == '__main__':
     jx_cfd = JxCFD(cookie)
     scheduler = BlockingScheduler()
     try:
-        scheduler.add_job(func=jx_cfd.exchange_red_package, trigger='cron', minute=59, id='jx_cfd',
+        scheduler.add_job(func=jx_cfd.exchange_red_package, trigger='cron', second=59, minute=59, id='jx_cfd',
                           timezone='Asia/Shanghai')
     except Exception as e:
         logging.error(f'启动定时任务失败，具体错误为：{e}')

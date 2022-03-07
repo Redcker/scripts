@@ -80,12 +80,9 @@ class JxCFD(object):
         else:
             title = ret['sErrMsg']
         print(f"抢购结果：{title}")
-        ret_code = ret['iRet']
-        delete_envs([advance_time['id']])
+        advance_time_id = advance_time['id'] if advance_time.get('id') else advance_time['_id']
+        delete_envs([advance_time_id])
         post_envs('CFD_ADVANCE_TIME', str(spend_time), '财富岛提前多久执行，请勿手动修改')
-        if ret_code in [2013, 2016]:  # 抢早或者抢迟不推送至微信
-            delete_envs([advance_time['id']])
-            post_envs('CFD_ADVANCE_TIME', str(spend_time), '财富岛提前多久执行，请勿手动修改')
 
 
 if __name__ == '__main__':

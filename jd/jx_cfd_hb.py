@@ -51,7 +51,6 @@ class JxCFD(object):
             pool = ret['hongbaopool']
         except (KeyError, IndexError):
             print('获取最新url失败，可能是cookie过期或黑号')
-            print('获取最新url失败，可能是cookie过期或黑号')
             return
         else:
             dwLvl = ret['hongbao'][0]['dwLvl']
@@ -72,7 +71,7 @@ class JxCFD(object):
             start_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp()
             ret = self.session.get(cfd_url).json()
             spend_time = datetime.datetime.now(tz=pytz.timezone('Asia/Shanghai')).timestamp() - start_time  # 请求花费时间
-        except requests.exceptions.JSONDecodeError:
+        except Exception:
             print('cookie认证失败，请不要担心，这个是偶发情况。此次请求停止，等待下次请求')
             return
         if ret['iRet'] == 0:
